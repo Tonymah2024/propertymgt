@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Management | Demo by VisiVault Analytics Ltd.</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #d1d5db;
+        }
+        .kpi-card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            position: relative;
+            height: 400px;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .modal-backdrop { background-color: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex flex-col min-h-screen">
+        <!-- Header -->
+        <header class="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700 p-4 sticky top-0 z-10">
+            <div class="container mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M2 22v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M18 10V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v6"/><path d="M10 16h4"/><rect x="2" y="12" width="20" height="10" rx="2"/></svg>
+                    <h1 class="text-xl md:text-2xl font-bold text-white">MapleLeaf Properties | Demo by VisiVault Analytics Ltd.</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto p-4 md:p-6 lg:p-8">
+            <!-- Filter Controls -->
+            <div class="mb-6 p-4 rounded-lg bg-gray-800 border border-gray-700 flex flex-wrap items-center gap-4">
+                <div class="flex-grow">
+                    <label for="date-range" class="text-sm font-medium text-gray-400 block mb-1">Date Range</label>
+                    <select id="date-range" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option>Last 30 Days</option>
+                        <option>Last Quarter</option>
+                        <option>Year-to-Date</option>
+                    </select>
+                </div>
+                <div class="flex-grow">
+                    <label for="property-type" class="text-sm font-medium text-gray-400 block mb-1">Property Type</label>
+                    <select id="property-type" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option>All Types</option>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Mixed-Use</option>
+                    </select>
+                </div>
+                <div class="flex-grow">
+                     <label for="region" class="text-sm font-medium text-gray-400 block mb-1">Region</label>
+                    <select id="region" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option>All Canada</option>
+                        <option>Greater Toronto Area</option>
+                        <option>Metro Vancouver</option>
+                        <option>Calgary Region</option>
+                    </select>
+                </div>
+                <div class="pt-6 flex flex-wrap gap-2">
+                    <button id="apply-filters-btn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                        Apply Filters
+                    </button>
+                    <input type="file" id="file-input" class="hidden" accept=".json">
+                    <button id="load-data-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                        Load Data
+                    </button>
+                    <button id="generate-insights-btn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition-colors whitespace-nowrap">
+                        ✨ Generate Insights
+                    </button>
+                </div>
+            </div>
+            
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+                <div class="kpi-card p-5 rounded-lg">
+                    <div class="flex items-center justify-between"><p class="text-sm font-medium text-gray-400">Portfolio Occupancy</p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                    <div><p id="kpi-occupancy" class="text-3xl font-bold text-white mt-2">96.8%</p><p id="kpi-occupancy-change" class="text-xs text-green-400 flex items-center mt-1">+0.2% vs last month</p></div>
+                </div>
+                <div class="kpi-card p-5 rounded-lg">
+                    <div class="flex items-center justify-between"><p class="text-sm font-medium text-gray-400">Avg. Rent per Unit</p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                    <div><p id="kpi-arpu" class="text-3xl font-bold text-white mt-2">$2,450 CAD</p><p id="kpi-arpu-change" class="text-xs text-green-400 flex items-center mt-1">+$25 vs last month</p></div>
+                </div>
+                <div class="kpi-card p-5 rounded-lg">
+                    <div class="flex items-center justify-between"><p class="text-sm font-medium text-gray-400">Open Maintenance</p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+                    <div><p id="kpi-maintenance" class="text-3xl font-bold text-white mt-2">42</p><p id="kpi-maintenance-change" class="text-xs text-red-400 flex items-center mt-1">+5 new this week</p></div>
+                </div>
+                <div class="kpi-card p-5 rounded-lg">
+                    <div class="flex items-center justify-between"><p class="text-sm font-medium text-gray-400">Rent Arrears</p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                    <div><p id="kpi-arrears" class="text-3xl font-bold text-white mt-2">$78.2k CAD</p><p id="kpi-arrears-change" class="text-xs text-green-400 flex items-center mt-1">-$5.1k vs last month</p></div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div class="chart-container"><h3 class="text-lg font-semibold text-white mb-4">Portfolio Occupancy Over Time</h3><canvas id="occupancyChart"></canvas></div>
+                <div class="chart-container"><h3 class="text-lg font-semibold text-white mb-4">Revenue vs. Expenses (YTD)</h3><canvas id="financialsChart"></canvas></div>
+                <div class="chart-container"><h3 class="text-lg font-semibold text-white mb-4">Upcoming Lease Expirations</h3><canvas id="leaseExpiryChart"></canvas></div>
+                <div class="chart-container"><h3 class="text-lg font-semibold text-white mb-4">Maintenance Request Status</h3><canvas id="maintenanceStatusChart"></canvas></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 border-t border-gray-700 mt-auto">
+            <p class="text-sm text-gray-500">&copy; 2025 VisiVault Analytics Ltd. A demo for MapleLeaf Properties.</p>
+        </footer>
+    </div>
+
+    <!-- Gemini Insights Modal -->
+    <div id="insights-modal" class="fixed inset-0 z-50 items-center justify-center hidden p-4 overflow-x-hidden overflow-y-auto bg-gray-900/80">
+        <div class="relative w-full max-w-2xl max-h-full"><div class="relative bg-gray-800 rounded-lg shadow border border-gray-700"><div class="flex items-start justify-between p-4 border-b rounded-t border-gray-600"><h3 class="text-xl font-semibold text-white">✨ AI Generated Insights</h3><button type="button" id="close-modal-btn" class="text-gray-400 bg-transparent hover:bg-gray-700 hover:text-white rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center"><svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg><span class="sr-only">Close modal</span></button></div><div class="p-6 space-y-6"><div id="insights-content" class="text-base leading-relaxed text-gray-300"><p>Generating insights...</p></div></div></div></div>
+    </div>
+
+    <script>
+        let geminiApiKey = '';
+        const generateRandomData = (count, min, max, decimals = 0) => Array.from({ length: count }, () => parseFloat((Math.random() * (max - min) + min).toFixed(decimals)));
+        const chartTextColor = '#9ca3af';
+        const chartGridColor = '#374151';
+        let occupancyChart, financialsChart, leaseExpiryChart, maintenanceStatusChart;
+
+        function createCharts() {
+            const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
+            occupancyChart = new Chart(occupancyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    datasets: [{ label: 'Occupancy %', data: generateRandomData(8, 95, 99, 1), borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, tension: 0.4 }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { beginAtZero: false, ticks: { color: chartTextColor, callback: (v) => v + '%' }, grid: { color: chartGridColor } }, 
+                        x: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } } 
+                    }, 
+                    plugins: { legend: { labels: { color: chartTextColor } } } 
+                }
+            });
+
+            const financialsCtx = document.getElementById('financialsChart').getContext('2d');
+            financialsChart = new Chart(financialsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3 YTD'],
+                    datasets: [
+                        { label: 'Total Revenue', data: [1.2, 1.3, 0.9], backgroundColor: '#2dd4bf' },
+                        { label: 'Operating Expenses', data: [0.7, 0.75, 0.5], backgroundColor: '#f87171' }
+                    ]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        y: { 
+                            ticks: { color: chartTextColor, callback: (v) => `$${v}M` },
+                            grid: { color: chartGridColor }
+                        }, 
+                        x: { 
+                            ticks: { color: chartTextColor },
+                            grid: { color: chartGridColor }
+                        } 
+                    }, 
+                    plugins: { legend: { labels: { color: chartTextColor } } } 
+                }
+            });
+            
+            const leaseExpiryCtx = document.getElementById('leaseExpiryChart').getContext('2d');
+            leaseExpiryChart = new Chart(leaseExpiryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['< 30 Days', '31-60 Days', '61-90 Days', '> 90 Days'],
+                    datasets: [{ label: '# of Leases Expiring', data: generateRandomData(4, 15, 60), backgroundColor: '#60a5fa', borderRadius: 4 }]
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { 
+                        x: { ticks: { color: chartTextColor }, grid: { color: chartGridColor } }, 
+                        y: { ticks: { color: chartTextColor }, grid: { display: false } } 
+                    }, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+            
+            const maintenanceStatusCtx = document.getElementById('maintenanceStatusChart').getContext('2d');
+            maintenanceStatusChart = new Chart(maintenanceStatusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['New', 'In Progress', 'Completed', 'On Hold'],
+                    datasets: [{ data: generateRandomData(4, 5, 80), backgroundColor: ['#facc15', '#38bdf8', '#22c55e', '#a8a29e'], borderColor: '#1f2937', borderWidth: 4, }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    cutout: '60%', 
+                    plugins: { 
+                        legend: { position: 'right', labels: { color: chartTextColor } } 
+                    } 
+                }
+            });
+        }
+        
+        function updateDashboardWithRandomData() {
+            document.getElementById('kpi-occupancy').textContent = (Math.random() * (99 - 95) + 95).toFixed(1) + '%';
+            document.getElementById('kpi-arpu').textContent = '$' + (Math.random() * (2600 - 2300) + 2300).toFixed(0) + ' CAD';
+            document.getElementById('kpi-maintenance').textContent = Math.floor(Math.random() * (55 - 20) + 20);
+            document.getElementById('kpi-arrears').textContent = '$' + (Math.random() * (90 - 50) + 50).toFixed(1) + 'k CAD';
+            
+            occupancyChart.data.datasets[0].data = generateRandomData(8, 95, 99, 1); occupancyChart.update();
+            financialsChart.data.datasets[0].data = generateRandomData(3, 1.1, 1.4, 1); financialsChart.data.datasets[1].data = generateRandomData(3, 0.6, 0.8, 2); financialsChart.update();
+            leaseExpiryChart.data.datasets[0].data = generateRandomData(4, 15, 60); leaseExpiryChart.update();
+            maintenanceStatusChart.data.datasets[0].data = generateRandomData(4, 5, 80); maintenanceStatusChart.update();
+        }
+
+        function updateDashboardWithData(data) {
+            try {
+                document.getElementById('kpi-occupancy').textContent = data.kpis.occupancy; document.getElementById('kpi-occupancy-change').textContent = data.kpis.occupancyChange;
+                document.getElementById('kpi-arpu').textContent = data.kpis.arpu; document.getElementById('kpi-arpu-change').textContent = data.kpis.arpuChange;
+                document.getElementById('kpi-maintenance').textContent = data.kpis.maintenance; document.getElementById('kpi-maintenance-change').textContent = data.kpis.maintenanceChange;
+                document.getElementById('kpi-arrears').textContent = data.kpis.arrears; document.getElementById('kpi-arrears-change').textContent = data.kpis.arrearsChange;
+
+                occupancyChart.data.labels = data.charts.occupancy.labels; occupancyChart.data.datasets[0].data = data.charts.occupancy.rates; occupancyChart.update();
+                financialsChart.data.labels = data.charts.financials.labels; financialsChart.data.datasets[0].data = data.charts.financials.revenue; financialsChart.data.datasets[1].data = data.charts.financials.expenses; financialsChart.update();
+                leaseExpiryChart.data.labels = data.charts.leaseExpiry.labels; leaseExpiryChart.data.datasets[0].data = data.charts.leaseExpiry.counts; leaseExpiryChart.update();
+                maintenanceStatusChart.data.labels = data.charts.maintenanceStatus.labels; maintenanceStatusChart.data.datasets[0].data = data.charts.maintenanceStatus.tickets; maintenanceStatusChart.update();
+                
+                const applyBtn = document.getElementById('apply-filters-btn'); applyBtn.disabled = true; applyBtn.textContent = 'Custom Data Loaded'; applyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } catch(e) { alert("Failed to load data. Ensure the JSON file has the correct structure."); console.error("Error updating dashboard with file data:", e); }
+        }
+
+        /*
+            Expected JSON structure for custom data loading:
+            {
+              "kpis": { "occupancy": "97.5%", "occupancyChange": "+0.5%", "arpu": "$2510 CAD", "arpuChange": "+$60", "maintenance": "35", "maintenanceChange": "-3 this week", "arrears": "$65.0k CAD", "arrearsChange": "-$10.2k" },
+              "charts": {
+                "occupancy": { "labels": ["Jan", "Feb", "Mar", "Apr"], "rates": [96.5, 97.0, 97.2, 97.5] },
+                "financials": { "labels": ["Q1", "Q2"], "revenue": [1.4, 1.5], "expenses": [0.8, 0.82] },
+                "leaseExpiry": { "labels": ["<30", "31-60", "61-90", ">90"], "counts": [25, 40, 55, 120] },
+                "maintenanceStatus": { "labels": ["New", "In Progress", "Completed", "On Hold"], "tickets": [12, 23, 150, 4] }
+              }
+            }
+        */
+
+        async function generateInsights() {
+            const insightsContent = document.getElementById('insights-content');
+            insightsContent.innerHTML = '<p>Generating insights...</p>';
+            document.getElementById('insights-modal').classList.remove('hidden'); document.getElementById('insights-modal').classList.add('flex');
+
+            const kpiData = {
+                occupancy: document.getElementById('kpi-occupancy').textContent,
+                arpu: document.getElementById('kpi-arpu').textContent,
+                maintenance: document.getElementById('kpi-maintenance').textContent,
+                arrears: document.getElementById('kpi-arrears').textContent,
+            };
+            const prompt = `
+                As a senior property management analyst from VisiVault Analytics Ltd., provide a brief, executive-level summary for our client, MapleLeaf Properties, based on the following Canadian portfolio data.
+                Your summary should be 2-3 paragraphs in clean HTML. First, give a high-level overview of portfolio health. Second, identify one key risk or opportunity and suggest a concrete next step to improve operations.
+
+                **Key Performance Indicators (KPIs):**
+                - Portfolio Occupancy Rate: ${kpiData.occupancy}
+                - Average Rent per Unit (ARPU): ${kpiData.arpu}
+                - Open Maintenance Tickets: ${kpiData.maintenance}
+                - Rent Arrears: ${kpiData.arrears}
+                
+                **Chart Data Summary:**
+                - Occupancy Trend: ${occupancyChart.data.labels.map((l, i) => `${l}: ${occupancyChart.data.datasets[0].data[i]}%`).join(', ')}
+                - Financials (Revenue vs. Expenses): ${financialsChart.data.labels.map((l, i) => `${l}: Rev $${financialsChart.data.datasets[0].data[i]}M / Exp $${financialsChart.data.datasets[1].data[i]}M`).join('; ')}
+                - Upcoming Lease Expirations: ${leaseExpiryChart.data.labels.map((l, i) => `${l}: ${leaseExpiryChart.data.datasets[0].data[i]}`).join('; ')}
+                - Maintenance Status: ${maintenanceStatusChart.data.labels.map((l, i) => `${l}: ${maintenanceStatusChart.data.datasets[0].data[i]}`).join('; ')}
+            `;
+
+             try {
+                if (!geminiApiKey) throw new Error("API Key is missing.");
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
+                if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                insightsContent.innerHTML = text || '<p>The model returned an empty response.</p>';
+            } catch (error) { console.error("Error calling Gemini API:", error); insightsContent.innerHTML = `<p class="text-red-400">An error occurred: ${error.message}. Check the console for details.</p>`; }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            createCharts();
+            geminiApiKey = prompt("Please enter your Google AI API key to enable AI insights:");
+            const generateInsightsBtn = document.getElementById('generate-insights-btn');
+            if (!geminiApiKey) { generateInsightsBtn.disabled = true; generateInsightsBtn.title = "No API Key provided."; generateInsightsBtn.classList.add('opacity-50', 'cursor-not-allowed'); }
+            
+            document.getElementById('apply-filters-btn').addEventListener('click', () => {
+                const btn = document.getElementById('apply-filters-btn');
+                btn.textContent = 'Loading...'; btn.disabled = true;
+                setTimeout(() => { updateDashboardWithRandomData(); btn.textContent = 'Apply Filters'; btn.disabled = false; }, 750);
+            });
+
+            document.getElementById('load-data-btn').addEventListener('click', () => document.getElementById('file-input').click());
+            document.getElementById('file-input').addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => { try { const data = JSON.parse(e.target.result); updateDashboardWithData(data); } catch (err) { alert('Error parsing JSON file.'); console.error(err); } };
+                reader.readAsText(file);
+            });
+
+            generateInsightsBtn.addEventListener('click', generateInsights);
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
+                const modal = document.getElementById('insights-modal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            });
+        });
+    </script>
+</body>
+</html>
+
