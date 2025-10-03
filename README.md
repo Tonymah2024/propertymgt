@@ -4,7 +4,8 @@ This is an interactive, single-page web application demonstrating a modern analy
 
 The dashboard is built entirely with front-end technologies and leverages Google's Gemini API to generate real-time, AI-powered insights from the displayed portfolio data.
 
-Live Demo: [INSERT YOUR GITHUB PAGES URL HERE]
+Live Demo: https://tonymah2024.github.io/propertymgt/
+
 Key Features
 
     At-a-Glance KPIs: Key Performance Indicators are prominently displayed for a quick overview of portfolio health, including:
